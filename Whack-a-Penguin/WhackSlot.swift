@@ -12,6 +12,8 @@ import SpriteKit
 class WhackSlot: SKNode {
 
     var charNode: SKSpriteNode!
+    var visible = false
+    var isHit = false
 
     // this method is in lieu of an initializer
     func configureAtPosition(pos: CGPoint) {
@@ -32,7 +34,7 @@ class WhackSlot: SKNode {
         cropNode.zPosition = 1
         // don't crop anything yet
         cropNode.maskNode = nil
-        // now crop the penguins
+        // now crop (hide) the penguins
         cropNode.maskNode = SKSpriteNode(imageNamed: "whackMask")
 
         // create the character node, with the "good penguin" image
@@ -45,5 +47,38 @@ class WhackSlot: SKNode {
         cropNode.addChild(charNode)
         // add the crop node to the slot
         addChild(cropNode)
+    }
+
+    func show(hideTime hideTime: Double) {
+        // make sure the slot isn't already visible
+        if visible { return }
+
+        // slide the penguin upwards and make it visible
+        charNode.runAction(SKAction.moveByX(0, y: 80, duration: 0.05))
+        visible = true
+        isHit = false
+
+        if RandomInt(min: 0, max: 2) == 0 {
+            // one-third of the time the penguin will be good
+            charNode.texture = SKTexture(imageNamed: "penguinGood")
+            charNode.name = "charFriend"
+        } else {
+            // the rest of the time the penguin will be bad
+            charNode.texture = SKTexture(imageNamed: "penguinEvil")
+            charNode.name = "charEnemy"
+        }
+
+        // hide the penguin after some time; 3.5 is the optimal value
+        RunAfterDelay(hideTime*3.5) { [unowned self] in
+            self.hide()
+        }
+    }
+
+    func hide() {
+        if !visible { return }
+
+        // move the penguin down into its hold
+        charNode.runAction(SKAction.moveByX(0, y: -80, duration: 0.05))
+        visible = false
     }
 }
