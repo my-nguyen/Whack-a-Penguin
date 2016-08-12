@@ -53,6 +53,10 @@ class WhackSlot: SKNode {
         // make sure the slot isn't already visible
         if visible { return }
 
+        // restore the penguin's size, since it may have been hit and shrunk
+        charNode.xScale = 1
+        charNode.yScale = 1
+
         // slide the penguin upwards and make it visible
         charNode.runAction(SKAction.moveByX(0, y: 80, duration: 0.05))
         visible = true
@@ -80,5 +84,17 @@ class WhackSlot: SKNode {
         // move the penguin down into its hold
         charNode.runAction(SKAction.moveByX(0, y: -80, duration: 0.05))
         visible = false
+    }
+
+    func hit() {
+        isHit = true
+
+        // create an action that waits for a period of time, measured in seconds
+        let delay = SKAction.waitForDuration(0.25)
+        let hide = SKAction.moveByX(0, y:-80, duration:0.5)
+        // run a block of code which sets the penguin's visible property to false
+        let notVisible = SKAction.runBlock { [unowned self] in self.visible = false }
+        // take an array of actions and execute them in order
+        charNode.runAction(SKAction.sequence([delay, hide, notVisible]))
     }
 }

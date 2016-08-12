@@ -20,6 +20,7 @@ class GameScene: SKScene {
     var slots = [WhackSlot]()
     // create a new enemy a bit faster than once a second
     var popupTime = 0.85
+    var numRounds = 0
 
     override func didMoveToView(view: SKView) {
         // refer to project PachinkoWithSpriteKit for a detailed explanation
@@ -51,6 +52,43 @@ class GameScene: SKScene {
     }
     
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+        if let touch = touches.first {
+            // get the touch location
+            let location = touch.locationInNode(self)
+            // get an array of nodes at the touch location
+            let nodes = nodesAtPoint(location)
+
+            // loop through the list of all nodes at the touch point and take action depending on
+            // whether node's name is "charFriend" or "charEnemy"
+            for node in nodes {
+                if node.name == "charFriend" {
+                    /// they shouldn't have whacked this penguin
+                    // get the parent of the parent of the node. the node is a penguin, so its parent
+                    // is a crop node, and the crop's parent is a slot
+                    let whackSlot = node.parent!.parent as! WhackSlot
+                    if !whackSlot.visible || whackSlot.isHit { continue }
+
+                    whackSlot.hit()
+                    score -= 5
+
+                    // play a sound and optionally wait for the sound to finish before continuing
+                    runAction(SKAction.playSoundFileNamed("whackBad.caf", waitForCompletion: false))
+                } else if node.name == "charEnemy" {
+                    /// they should have whacked this one
+                    let whackSlot = node.parent!.parent as! WhackSlot
+                    if !whackSlot.visible || whackSlot.isHit { continue }
+
+                    // shrink the penguin
+                    whackSlot.charNode.xScale = 0.85
+                    whackSlot.charNode.yScale = 0.85
+
+                    whackSlot.hit()
+                    score += 1
+
+                    runAction(SKAction.playSoundFileNamed("whack.caf", waitForCompletion:false))
+                }
+            }
+        }
     }
    
     override func update(currentTime: CFTimeInterval) {
@@ -65,6 +103,25 @@ class GameScene: SKScene {
     }
 
     func createEnemy() {
+        numRounds += 1
+
+        // end the game after 30 rounds
+        if numRounds >= 30 {
+            // hide all the slots
+            for slot in slots {
+                slot.hide()
+            }
+
+            // show a "Game over" sprite
+            let gameOver = SKSpriteNode(imageNamed: "gameOver")
+            gameOver.position = CGPoint(x: 512, y: 384)
+            // place the "Gamve over" graphic over other items
+            gameOver.zPosition = 1
+            addChild(gameOver)
+
+            return
+        }
+
         // decrease popupTime each time this method is invoked
         popupTime *= 0.991
 
